@@ -1,4 +1,4 @@
-name: Valkey Search Benchmark
+name: Valkey Search Benchmark V2
 
 on:
   workflow_dispatch:
