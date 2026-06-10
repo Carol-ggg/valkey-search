@@ -1,4 +1,4 @@
-name: Valkey Search Benchmark
+name: Valkey Search Benchmark V2 (TEST)
 
 on:
   workflow_dispatch:
@@ -58,7 +58,7 @@ jobs:
       PERF_BENCHMARK_BRANCH: "mixed_fuzzy"
       PERF_BENCHMARK_DIR: "valkey-perf-benchmark"
       PERF_BENCHMARK_PATH: "${{ github.workspace }}/valkey-perf-benchmark"
-      CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-benchmarks-arm.json"
+      CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-smoke-arm.json"
       # Run parameters
       NUM_RUN: ${{ inputs.num_runs || '5' }}
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
