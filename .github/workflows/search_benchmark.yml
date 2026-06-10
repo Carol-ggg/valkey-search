@@ -203,23 +203,6 @@ jobs:
             --results-dir results \
             --runs $NUM_RUN
 
-      - name: Push metrics to PostgreSQL
-        working-directory: valkey-perf-benchmark
-        env:
-          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
-        run: |
-          python utils/push_to_postgres.py \
-            --results-dir ./results \
-            --host ${{ secrets.RDS_HOST }} \
-            --port 5432 \
-            --database postgres \
-            --username ${{ secrets.PG_USERNAME }} \
-            --password "$PGPASSWORD" \
-            --table-name benchmark_metrics_search \
-            --module search \
-            --test-type fts \
-            --module-commit ${{ github.sha }}
-
       - name: Clean large profiling data
         if: always()
         continue-on-error: true
