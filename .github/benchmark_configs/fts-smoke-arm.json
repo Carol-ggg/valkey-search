@@ -96,6 +96,14 @@
       "cores_per_server": 8,
       "cores_per_client": 8
     },
+    "config_sets": [
+      {
+        "io-threads": 1,
+        "search.reader-threads": 1,
+        "search.writer-threads": 1,
+        "search.async-fanout-threshold": 4
+      }
+    ],
     "modules": [
       {
         "path": "../valkey-search/.build-release/libsearch.so",
