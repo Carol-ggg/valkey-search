@@ -55,7 +55,7 @@ jobs:
       CORE_PATH: "${{ github.workspace }}/valkey"
       # Benchmark configuration
       PERF_BENCHMARK_REPO: "Carol-ggg/valkey-perf-benchmark"
-      PERF_BENCHMARK_BRANCH: "mixed_fuzzy"
+      PERF_BENCHMARK_BRANCH: "scenario-data"
       PERF_BENCHMARK_DIR: "valkey-perf-benchmark"
       PERF_BENCHMARK_PATH: "${{ github.workspace }}/valkey-perf-benchmark"
       CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-smoke-arm.json"
