@@ -21,12 +21,12 @@ on:
       max_core_commits:
         description: "Max core commits to scan (limits populate)"
         required: false
-        default: "20"
+        default: "3"
         type: string
       max_module_commits:
         description: "Max module commits to scan (limits populate)"
         required: false
-        default: "20"
+        default: "3"
         type: string
   push:
     branches:
@@ -72,8 +72,8 @@ jobs:
       # Run parameters
       NUM_RUN: ${{ inputs.num_runs || '5' }}
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
-      MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '20' }}
-      MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '20' }}
+      MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '3' }}
+      MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '3' }}
       IDLE_TIMEOUT: "60000"
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
