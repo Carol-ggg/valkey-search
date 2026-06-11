@@ -90,7 +90,7 @@
     ],
     "port": 6379,
     "cluster_mode": [false],
-    "tls_mode": false,
+    "tls_mode": true,
     "io-threads": 1,
     "cpu_allocation": {
       "cores_per_server": 8,

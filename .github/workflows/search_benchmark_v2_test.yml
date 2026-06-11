@@ -74,6 +74,7 @@ jobs:
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
       MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '20' }}
       MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '20' }}
+      IDLE_TIMEOUT: "60000"
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
     steps:
@@ -172,6 +173,36 @@ jobs:
       # Commit tracking: populate queue and fetch next pair to benchmark
       # =========================================================================
 
+      - name: Cleanup stale rows from previous runs
+        working-directory: ${{ env.PERF_BENCHMARK_DIR }}
+        env:
+          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
+        run: |
+          python utils/module_postgres_track_commits.py cleanup \
+            --module-name "$MODULE_NAME" \
+            --config-file "$CONFIG_FILE" \
+            --idle-timeout "$IDLE_TIMEOUT" \
+            --host ${{ secrets.RDS_HOST }} \
+            --port 5432 \
+            --database postgres \
+            --username ${{ secrets.PG_USERNAME }} \
+            --password "$PGPASSWORD"
+
+      - name: Check for incomplete rows from previous runs
+        working-directory: ${{ env.PERF_BENCHMARK_DIR }}
+        env:
+          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
+        run: |
+          python utils/module_postgres_track_commits.py check-incomplete \
+            --module-name "$MODULE_NAME" \
+            --config-file "$CONFIG_FILE" \
+            --idle-timeout "$IDLE_TIMEOUT" \
+            --host ${{ secrets.RDS_HOST }} \
+            --port 5432 \
+            --database postgres \
+            --username ${{ secrets.PG_USERNAME }} \
+            --password "$PGPASSWORD"
+
       - name: Populate commit queue
         working-directory: ${{ env.PERF_BENCHMARK_DIR }}
         env:
@@ -186,6 +217,7 @@ jobs:
             --config-file "$CONFIG_FILE" \
             --max-core-commits "$MAX_CORE_COMMITS" \
             --max-module-commits "$MAX_MODULE_COMMITS" \
+            --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
             --database postgres \
@@ -202,6 +234,7 @@ jobs:
             --module-name "$MODULE_NAME" \
             --max-pairs "$MAX_PAIRS" \
             --config-file "$CONFIG_FILE" \
+            --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
             --database postgres \
@@ -234,23 +267,9 @@ jobs:
             echo "Processing pair: core=$CORE_SHA, module=$MODULE_SHA"
             echo "==========================================================="
 
-            # --- Checkout specific SHAs ---
-            cd "$CORE_PATH" && git checkout "$CORE_SHA"
-            cd "$MODULE_PATH" && git checkout "$MODULE_SHA"
-
-            # --- Build valkey (for valkey-server) ---
-            cd "$CORE_PATH"
-            echo "Building valkey-server..."
-            make distclean || true
-            make BUILD_TLS=yes -j$(nproc)
-            if [[ ! -f "src/valkey-server" ]]; then
-              echo "✗ valkey-server build failed"
-              exit 1
-            fi
-            echo "✓ valkey-server build successful"
-
-            # --- Build valkey-search module ---
+            # --- Checkout module SHA and build ---
             cd "$MODULE_PATH"
+            git checkout "$MODULE_SHA"
             echo "Building valkey-search module..."
             if [[ ! -f "/usr/local/bin/gcc" ]]; then
               echo "✗ ERROR: GCC 12 not found at /usr/local/bin/gcc"
@@ -274,6 +293,7 @@ jobs:
             python benchmark.py \
               --module "$MODULE_NAME" \
               --valkey-path "$CORE_PATH" \
+              --commits "$CORE_SHA" \
               --valkey-benchmark-path "${{ github.workspace }}/valkey_ram/src/valkey-benchmark" \
               --target-ip ${{ secrets.EC2_SEARCH_IP }} \
               --config "$CONFIG_FILE" \
@@ -299,6 +319,7 @@ jobs:
             python utils/module_postgres_track_commits.py mark-complete \
               --module-name "$MODULE_NAME" \
               --config-file "$CONFIG_FILE" \
+              --idle-timeout "$IDLE_TIMEOUT" \
               --host ${{ secrets.RDS_HOST }} \
               --port 5432 \
               --database postgres \
@@ -340,15 +361,17 @@ jobs:
           python utils/module_postgres_track_commits.py cleanup \
             --module-name "$MODULE_NAME" \
             --config-file "$CONFIG_FILE" \
+            --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
             --database postgres \
             --username ${{ secrets.PG_USERNAME }} \
             --password "$PGPASSWORD"
 
-          python utils/module_postgres_track_commits.py delete-incomplete \
+          python utils/module_postgres_track_commits.py check-incomplete \
             --module-name "$MODULE_NAME" \
             --config-file "$CONFIG_FILE" \
+            --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
             --database postgres \
