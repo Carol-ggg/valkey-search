@@ -91,16 +91,22 @@
     "port": 6379,
     "cluster_mode": [false],
     "tls_mode": true,
-    "io-threads": 1,
+    "io-threads": 8,
     "cpu_allocation": {
       "cores_per_server": 8,
       "cores_per_client": 8
     },
     "config_sets": [
       {
-        "io-threads": 1,
+        "io-threads": 8,
         "search.reader-threads": 1,
         "search.writer-threads": 1,
+        "search.async-fanout-threshold": 4
+      },
+      {
+        "io-threads": 8,
+        "search.reader-threads": 8,
+        "search.writer-threads": 8,
         "search.async-fanout-threshold": 4
       }
     ],
