@@ -30,7 +30,7 @@ on:
         type: string
   push:
     branches:
-      - working
+      - object-design
   schedule:
     - cron: "0 9 * * *"
 
@@ -55,7 +55,7 @@ jobs:
       # Module configuration
       MODULE_NAME: "search"
       MODULE_GITHUB_REPO: "Carol-ggg/valkey-search"
-      MODULE_BRANCH: ${{ inputs.branch || 'working' }}
+      MODULE_BRANCH: ${{ inputs.branch || 'object-design' }}
       MODULE_DIR: "valkey-search"
       MODULE_PATH: "${{ github.workspace }}/valkey-search"
       # Core configuration
