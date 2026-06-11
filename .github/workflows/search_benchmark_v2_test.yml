@@ -56,7 +56,7 @@ jobs:
       MODULE_NAME: "search"
       MODULE_GITHUB_REPO: "Carol-ggg/valkey-search"
       MODULE_BRANCH: ${{ inputs.branch || 'object-design' }}
-      MODULE_DIR: "object-design"
+      MODULE_DIR: "valkey-search"
       MODULE_PATH: "${{ github.workspace }}/valkey-search"
       # Core configuration
       CORE_GITHUB_REPO: "valkey-io/valkey"
