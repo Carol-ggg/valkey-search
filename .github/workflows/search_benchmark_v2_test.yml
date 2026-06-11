@@ -316,15 +316,31 @@ jobs:
           name: benchmark-results
           path: ${{ env.PERF_BENCHMARK_DIR }}/results
 
+      - name: Cleanup stale commit tracking
+        if: always()
+        continue-on-error: true
+        working-directory: ${{ env.PERF_BENCHMARK_DIR }}
+        env:
+          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
+        run: |
+          python utils/module_postgres_track_commits.py cleanup \
+            --module-name "$MODULE_NAME" \
+            --config-file "$CONFIG_FILE" \
+            --host ${{ secrets.RDS_HOST }} \
+            --port 5432 \
+            --database postgres \
+            --username ${{ secrets.PG_USERNAME }} \
+            --password "$PGPASSWORD"
+
       - name: Cleanup
         if: always()
         continue-on-error: true
         run: |
           echo "Cleaning up workspace..."
           pkill -f valkey || echo "No valkey processes found to kill"
-          
+
           # No need to copy datasets - they're already in persistent cache via symlink
           echo "Datasets persist at /home/ec2-user/search-datasets-cache"
-          
+
           # Clean workspace
           rm -rf "${{ github.workspace }}/valkey_ram" "$CORE_PATH" "$MODULE_PATH" "$PERF_BENCHMARK_PATH"
