@@ -18,6 +18,16 @@ on:
         required: false
         default: "1"
         type: string
+      max_core_commits:
+        description: "Max core commits to scan (limits populate)"
+        required: false
+        default: "20"
+        type: string
+      max_module_commits:
+        description: "Max module commits to scan (limits populate)"
+        required: false
+        default: "20"
+        type: string
   push:
     branches:
       - main
@@ -62,6 +72,8 @@ jobs:
       # Run parameters
       NUM_RUN: ${{ inputs.num_runs || '5' }}
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
+      MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '20' }}
+      MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '20' }}
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
     steps:
@@ -172,6 +184,8 @@ jobs:
             --module-repo "$MODULE_PATH" \
             --module-branch "$MODULE_BRANCH" \
             --config-file "$CONFIG_FILE" \
+            --max-core-commits "$MAX_CORE_COMMITS" \
+            --max-module-commits "$MAX_MODULE_COMMITS" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
             --database postgres \
