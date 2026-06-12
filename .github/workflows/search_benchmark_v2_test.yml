@@ -304,6 +304,14 @@ jobs:
               --runs $NUM_RUN
 
             # --- Push metrics ---
+            CORE_TS=$(git -C "$CORE_PATH" show -s --format=%cI "$CORE_SHA")
+            MODULE_TS=$(git -C "$MODULE_PATH" show -s --format=%cI "$MODULE_SHA")
+            if [[ "$CORE_TS" > "$MODULE_TS" ]]; then
+              MAX_TS="$CORE_TS"
+            else
+              MAX_TS="$MODULE_TS"
+            fi
+
             python utils/push_to_postgres.py \
               --results-dir "./$RESULTS_DIR" \
               --host ${{ secrets.RDS_HOST }} \
@@ -313,7 +321,8 @@ jobs:
               --password "$PGPASSWORD" \
               --module "$MODULE_NAME" \
               --test-type fts \
-              --module-commit "$MODULE_SHA"
+              --module-commit "$MODULE_SHA" \
+              --max-timestamp "$MAX_TS"
 
             # --- Mark this pair complete ---
             python utils/module_postgres_track_commits.py mark-complete \
