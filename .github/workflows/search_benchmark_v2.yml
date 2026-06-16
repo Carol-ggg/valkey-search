@@ -28,9 +28,6 @@ on:
         required: false
         default: "3"
         type: string
-  push:
-    branches:
-      - object-design
   schedule:
     - cron: "0 9 * * *"
 
