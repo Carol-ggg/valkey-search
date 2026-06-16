@@ -482,6 +482,11 @@
         "type": "tag_only",
         "doc_count": 100,
         "tags": ["electronics", "books", "clothing", "food", "sports"]
+      },
+      "prefix_queries.csv": {
+        "type": "prefix",
+        "doc_count": 100,
+        "source": "search_terms.csv"
       }
     },
     "test_groups": [
