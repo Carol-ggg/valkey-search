@@ -185,21 +185,6 @@ jobs:
             --username ${{ secrets.PG_USERNAME }} \
             --password "$PGPASSWORD"
 
-      - name: Check for incomplete rows from previous runs
-        working-directory: ${{ env.PERF_BENCHMARK_DIR }}
-        env:
-          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
-        run: |
-          python utils/module_postgres_track_commits.py check-incomplete \
-            --module-name "$MODULE_NAME" \
-            --config-file "$CONFIG_FILE" \
-            --idle-timeout "$IDLE_TIMEOUT" \
-            --host ${{ secrets.RDS_HOST }} \
-            --port 5432 \
-            --database postgres \
-            --username ${{ secrets.PG_USERNAME }} \
-            --password "$PGPASSWORD"
-
       - name: Populate commit queue
         working-directory: ${{ env.PERF_BENCHMARK_DIR }}
         env:
@@ -365,16 +350,6 @@ jobs:
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
         run: |
           python utils/module_postgres_track_commits.py cleanup \
-            --module-name "$MODULE_NAME" \
-            --config-file "$CONFIG_FILE" \
-            --idle-timeout "$IDLE_TIMEOUT" \
-            --host ${{ secrets.RDS_HOST }} \
-            --port 5432 \
-            --database postgres \
-            --username ${{ secrets.PG_USERNAME }} \
-            --password "$PGPASSWORD"
-
-          python utils/module_postgres_track_commits.py check-incomplete \
             --module-name "$MODULE_NAME" \
             --config-file "$CONFIG_FILE" \
             --idle-timeout "$IDLE_TIMEOUT" \
