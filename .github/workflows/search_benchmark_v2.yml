@@ -212,7 +212,7 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
         run: |
-          PAIRS=$(python utils/module_postgres_track_commits.py fetch-next \
+          OUTPUT=$(python utils/module_postgres_track_commits.py fetch-next \
             --module-name "$MODULE_NAME" \
             --max-pairs "$MAX_PAIRS" \
             --config-file "$CONFIG_FILE" \
@@ -223,13 +223,18 @@ jobs:
             --username ${{ secrets.PG_USERNAME }} \
             --password "$PGPASSWORD")
 
+          PAIRS=$(echo "$OUTPUT" | sed -n '1p')
+          TIMESTAMPS=$(echo "$OUTPUT" | sed -n '2p')
+
           echo "pairs=$PAIRS" >> "$GITHUB_OUTPUT"
+          echo "timestamps=$TIMESTAMPS" >> "$GITHUB_OUTPUT"
 
           if [[ -z "$PAIRS" ]]; then
             echo "No pending pairs to benchmark. Exiting."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "Pairs to benchmark: $PAIRS"
+            echo "Timestamps: $TIMESTAMPS"
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -242,11 +247,16 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
         run: |
-          for PAIR in ${{ steps.fetch_pair.outputs.pairs }}; do
+          read -ra PAIRS_ARR <<< "${{ steps.fetch_pair.outputs.pairs }}"
+          read -ra TS_ARR <<< "${{ steps.fetch_pair.outputs.timestamps }}"
+
+          for i in "${!PAIRS_ARR[@]}"; do
+            PAIR="${PAIRS_ARR[$i]}"
+            MAX_TS="${TS_ARR[$i]}"
             CORE_SHA="${PAIR%%:*}"
             MODULE_SHA="${PAIR##*:}"
             echo "==========================================================="
-            echo "Processing pair: core=$CORE_SHA, module=$MODULE_SHA"
+            echo "Processing pair: core=$CORE_SHA, module=$MODULE_SHA, max_ts=$MAX_TS"
             echo "==========================================================="
 
             # --- Checkout module SHA and build ---
@@ -284,15 +294,6 @@ jobs:
               --cluster-mode-filter false \
               --results-dir "$RESULTS_DIR" \
               --runs $NUM_RUN
-
-            # --- Push metrics ---
-            CORE_TS=$(git -C "$CORE_PATH" show -s --format=%cI "$CORE_SHA")
-            MODULE_TS=$(git -C "$MODULE_PATH" show -s --format=%cI "$MODULE_SHA")
-            if [[ "$CORE_TS" > "$MODULE_TS" ]]; then
-              MAX_TS="$CORE_TS"
-            else
-              MAX_TS="$MODULE_TS"
-            fi
 
             python utils/push_to_postgres.py \
               --results-dir "./$RESULTS_DIR" \
