@@ -72,6 +72,8 @@ jobs:
       MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '3' }}
       MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '3' }}
       IDLE_TIMEOUT: "60000"
+      CLUSTER_MODE: "false"
+      SKIP_CONFIG_SET: "true"
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
     steps:
@@ -178,6 +180,8 @@ jobs:
           python utils/module_postgres_track_commits.py cleanup \
             --module-name "$MODULE_NAME" \
             --config-file "$CONFIG_FILE" \
+            --cluster-mode "$CLUSTER_MODE" \
+            ${SKIP_CONFIG_SET:+--skip-config-set} \
             --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
@@ -197,6 +201,8 @@ jobs:
             --module-repo "$MODULE_PATH" \
             --module-branch "$MODULE_BRANCH" \
             --config-file "$CONFIG_FILE" \
+            --cluster-mode "$CLUSTER_MODE" \
+            ${SKIP_CONFIG_SET:+--skip-config-set} \
             --max-core-commits "$MAX_CORE_COMMITS" \
             --max-module-commits "$MAX_MODULE_COMMITS" \
             --idle-timeout "$IDLE_TIMEOUT" \
@@ -216,6 +222,8 @@ jobs:
             --module-name "$MODULE_NAME" \
             --max-pairs "$MAX_PAIRS" \
             --config-file "$CONFIG_FILE" \
+            --cluster-mode "$CLUSTER_MODE" \
+            ${SKIP_CONFIG_SET:+--skip-config-set} \
             --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
@@ -291,7 +299,8 @@ jobs:
               --config "$CONFIG_FILE" \
               --mode both \
               --module-path "$MODULE_PATH/.build-release/libsearch.so" \
-              --cluster-mode-filter false \
+              --cluster-mode-filter "$CLUSTER_MODE" \
+              ${SKIP_CONFIG_SET:+--skip-config-set} \
               --results-dir "$RESULTS_DIR" \
               --runs $NUM_RUN
 
@@ -311,6 +320,8 @@ jobs:
             python utils/module_postgres_track_commits.py mark-complete \
               --module-name "$MODULE_NAME" \
               --config-file "$CONFIG_FILE" \
+              --cluster-mode "$CLUSTER_MODE" \
+              ${SKIP_CONFIG_SET:+--skip-config-set} \
               --idle-timeout "$IDLE_TIMEOUT" \
               --host ${{ secrets.RDS_HOST }} \
               --port 5432 \
@@ -353,6 +364,8 @@ jobs:
           python utils/module_postgres_track_commits.py cleanup \
             --module-name "$MODULE_NAME" \
             --config-file "$CONFIG_FILE" \
+            --cluster-mode "$CLUSTER_MODE" \
+            ${SKIP_CONFIG_SET:+--skip-config-set} \
             --idle-timeout "$IDLE_TIMEOUT" \
             --host ${{ secrets.RDS_HOST }} \
             --port 5432 \
