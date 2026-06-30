@@ -72,7 +72,7 @@ jobs:
       MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '3' }}
       MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '3' }}
       IDLE_TIMEOUT: "60000"
-      CLUSTER_MODE: ""
+      CLUSTER_MODE: "true"
       SKIP_CONFIG_SET: ""
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
