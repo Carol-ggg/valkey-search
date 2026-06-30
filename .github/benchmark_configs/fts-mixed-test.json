@@ -73,7 +73,7 @@
       }
     ],
     "port": 6379,
-    "cluster_mode": [false],
+    "cluster_mode": [true, false],
     "tls_mode": false,
     "io-threads": 8,
     "cpu_allocation": {
