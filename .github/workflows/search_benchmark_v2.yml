@@ -65,7 +65,7 @@ jobs:
       PERF_BENCHMARK_BRANCH: "combined"
       PERF_BENCHMARK_DIR: "valkey-perf-benchmark"
       PERF_BENCHMARK_PATH: "${{ github.workspace }}/valkey-perf-benchmark"
-      CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-mixed-test.json"
+      CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-benchmarks-arm-no-profiling.json"
       # Run parameters
       NUM_RUN: ${{ inputs.num_runs || '5' }}
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
