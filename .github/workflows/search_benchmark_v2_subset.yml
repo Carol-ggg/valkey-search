@@ -1,4 +1,4 @@
-name: Valkey Search Benchmark V2 cluster subset test
+name: Valkey Search Benchmark V2 subset test
 
 on:
   workflow_dispatch:
@@ -51,8 +51,8 @@ jobs:
     env:
       # Module configuration
       MODULE_NAME: "search"
-      MODULE_GITHUB_REPO: "Carol-ggg/valkey-search"
-      MODULE_BRANCH: ${{ inputs.branch || 'object-design' }}
+      MODULE_GITHUB_REPO: "valkey-io/valkey-search"
+      MODULE_BRANCH: ${{ inputs.branch || 'main' }}
       MODULE_DIR: "valkey-search"
       MODULE_PATH: "${{ github.workspace }}/valkey-search"
       # Core configuration
@@ -65,14 +65,14 @@ jobs:
       PERF_BENCHMARK_BRANCH: "combined"
       PERF_BENCHMARK_DIR: "valkey-perf-benchmark"
       PERF_BENCHMARK_PATH: "${{ github.workspace }}/valkey-perf-benchmark"
-      CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-mixed-test.json"
+      CONFIG_FILE: "${{ github.workspace }}/valkey-perf-benchmark/configs/fts-benchmarks-group1-arm.json"
       # Run parameters
       NUM_RUN: ${{ inputs.num_runs || '5' }}
       MAX_PAIRS: ${{ inputs.max_pairs || '1' }}
       MAX_CORE_COMMITS: ${{ inputs.max_core_commits || '3' }}
       MAX_MODULE_COMMITS: ${{ inputs.max_module_commits || '3' }}
       IDLE_TIMEOUT: "60000"
-      CLUSTER_MODE: "true"
+      CLUSTER_MODE: "false"
       SKIP_CONFIG_SET: ""
     runs-on: [self-hosted, valkey-search-arm]
     timeout-minutes: 7200
