@@ -168,7 +168,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: write
     steps:
       - name: Ensure git is installed
         run: command -v git || sudo dnf install -y git
@@ -407,7 +406,7 @@ jobs:
       - name: Upload artifacts
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: search-benchmark-pr-${{ needs.resolve.outputs.pr_number }}
           path: |
