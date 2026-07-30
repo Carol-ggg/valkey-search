@@ -23,6 +23,13 @@ on:
         required: false
         type: string
         default: "3"
+      config_file:
+        description: "Benchmark config file (from valkey-perf-benchmark/configs/)"
+        type: choice
+        default: "fts-benchmarks-shortened-arm.json"
+        options:
+          - "fts-benchmarks-arm.json"
+          - "fts-benchmarks-shortened-arm.json"
       cluster_mode:
         description: "Cluster mode (empty=run config in file, true=cluster-mode only, false=non-cluster-mode only)"
         type: choice
@@ -34,17 +41,23 @@ on:
       skip_profiling:
         description: "Skip profiling (faster run, no flamegraphs)"
         type: boolean
-        default: false
+        default: true
       skip_config_set:
         description: "Skip config_sets (use default config set)"
         type: boolean
         default: false
+      timeout_minutes:
+        description: "Job timeout in minutes (default 1440)"
+        required: false
+        default: "1440"
+        type: string
   pull_request_target:
     types: [labeled]
 
-# For label-triggered runs, serialize per PR+label so re-labels queue rather
-# than contaminate results. On-demand (workflow_dispatch) runs have no
-# concurrency constraint — each runs independently.
+# Concurrency: group by PR number + label name. Same label re-added cancels
+# the in-progress run and starts fresh. Different labels produce separate
+# groups; parallel execution is prevented by the single self-hosted runner.
+# On-demand (workflow_dispatch) runs use a unique run ID so they never collide.
 concurrency:
   group: ${{ github.event_name == 'pull_request_target' && format('benchmark-{0}-{1}', github.event.pull_request.number, github.event.label.name) || format('on-demand-{0}', github.run_id) }}
   cancel-in-progress: true
@@ -76,6 +89,7 @@ jobs:
       merge_commit_sha: ${{ steps.pr.outputs.merge_commit_sha }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
       base_ref: ${{ steps.pr.outputs.base_ref }}
+      base_sha: ${{ steps.pr.outputs.base_sha }}
       pr_number: ${{ steps.pr.outputs.pr_number }}
       cluster_filter: ${{ steps.pr.outputs.cluster_filter }}
       skip_profiling: ${{ steps.pr.outputs.skip_profiling }}
@@ -104,6 +118,7 @@ jobs:
               core.setOutput('merge_commit_sha', pr.data.merge_commit_sha);
               core.setOutput('head_sha', pr.data.head.sha);
               core.setOutput('base_ref', pr.data.base.ref);
+              core.setOutput('base_sha', pr.data.base.sha);
               core.setOutput('pr_number', String(prNumber));
               const clusterInput = '${{ github.event.inputs.cluster_mode }}';
               core.setOutput('cluster_filter', clusterInput || '');
@@ -120,6 +135,7 @@ jobs:
               core.setOutput('merge_commit_sha', pr.merge_commit_sha);
               core.setOutput('head_sha', pr.head.sha);
               core.setOutput('base_ref', pr.base.ref);
+              core.setOutput('base_sha', pr.base.sha);
               core.setOutput('pr_number', String(pr.number));
               core.setOutput('cluster_filter', '');
               core.setOutput('skip_profiling', label === 'run-search-benchmark-skip-profiling' ? 'true' : 'false');
@@ -131,6 +147,7 @@ jobs:
           echo "merge_commit_sha: ${{ steps.pr.outputs.merge_commit_sha }}"
           echo "head_sha: ${{ steps.pr.outputs.head_sha }}"
           echo "base_ref: ${{ steps.pr.outputs.base_ref }}"
+          echo "base_sha: ${{ steps.pr.outputs.base_sha }}"
           echo "pr_number: ${{ steps.pr.outputs.pr_number }}"
           echo "cluster_filter: ${{ steps.pr.outputs.cluster_filter }}"
           echo "skip_profiling: ${{ steps.pr.outputs.skip_profiling }}"
@@ -139,7 +156,7 @@ jobs:
   benchmark:
     needs: resolve
     runs-on: [self-hosted, valkey-search-arm-pr]
-    timeout-minutes: 900
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes || '1440') }}
     env:
       # Module configuration
       MODULE_NAME: "search"
@@ -154,7 +171,7 @@ jobs:
       CORE_PATH: "${{ github.workspace }}/valkey"
       # Benchmark configuration
       PERF_BENCHMARK_REPO: "carol-ggg/valkey-perf-benchmark"
-      PERF_BENCHMARK_BRANCH: "module2-multi-restart"
+      PERF_BENCHMARK_BRANCH: "module3-comparison"
       PERF_BENCHMARK_DIR: "valkey-perf-benchmark"
       PERF_BENCHMARK_PATH: "${{ github.workspace }}/valkey-perf-benchmark"
       CONFIG_FILE: "${{ github.workspace }}/valkey-search/.github/benchmark_configs/fts-smoke-short-arm.json"
@@ -185,6 +202,7 @@ jobs:
           ref: npy_support
           path: valkey_ram
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Checkout valkey (for valkey-server)
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -208,7 +226,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           repository: ${{ github.repository }}
-          ref: ${{ needs.resolve.outputs.base_ref }}
+          ref: ${{ needs.resolve.outputs.base_sha }}
           path: ${{ env.MODULE_BASELINE_DIR }}
           fetch-depth: 0
           persist-credentials: false
@@ -219,6 +237,7 @@ jobs:
           repository: ${{ env.PERF_BENCHMARK_REPO }}
           ref: ${{ env.PERF_BENCHMARK_BRANCH }}
           path: ${{ env.PERF_BENCHMARK_DIR }}
+          persist-credentials: false
 
       - name: Setup persistent datasets cache
         run: |
@@ -253,6 +272,35 @@ jobs:
           g++ --version
 
           pip install --require-hashes -r requirements.txt
+
+      - name: Ensure GCC >= 12 (required for valkey-search build)
+        # NOTE: This uses AL2023-specific packages. Update if runner OS changes.
+        run: |
+          GCC_MIN_VERSION=12
+          CURRENT_VERSION=0
+
+          if /usr/local/bin/gcc --version 2>/dev/null; then
+            CURRENT_VERSION=$(/usr/local/bin/gcc -dumpversion | cut -d. -f1)
+          fi
+
+          if [[ "$CURRENT_VERSION" -ge "$GCC_MIN_VERSION" ]]; then
+            echo "✓ GCC $CURRENT_VERSION already available at /usr/local/bin/gcc (>= $GCC_MIN_VERSION)"
+            /usr/local/bin/gcc --version
+            /usr/local/bin/g++ --version
+          else
+            echo "GCC >= $GCC_MIN_VERSION not found (current: $CURRENT_VERSION) — installing GCC 14 from AL2023 repos..."
+            sudo dnf install -y gcc14 gcc14-c++
+
+            # Create symlinks in /usr/local/bin so builds pick up GCC 14 by default
+            sudo ln -sf /usr/bin/gcc14-gcc /usr/local/bin/gcc
+            sudo ln -sf /usr/bin/gcc14-g++ /usr/local/bin/g++
+            sudo ln -sf /usr/bin/gcc14-gcc /usr/local/bin/cc
+            sudo ln -sf /usr/bin/gcc14-g++ /usr/local/bin/c++
+
+            echo "✓ GCC 14 installed and symlinked"
+            /usr/local/bin/gcc --version
+            /usr/local/bin/g++ --version
+          fi
 
       - name: Build valkey_ram (for dataset-enabled valkey-benchmark)
         working-directory: valkey_ram
