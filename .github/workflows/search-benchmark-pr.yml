@@ -68,6 +68,7 @@ defaults:
 
 # Workflow-level permissions are minimal. Jobs grant additional scopes only
 # where they are actually needed (defense-in-depth).
+# this is a test branch test
 permissions:
   contents: read
 
