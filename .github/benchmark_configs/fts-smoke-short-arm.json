@@ -55,6 +55,26 @@
         "path": "../valkey-search/.build-release/libsearch.so",
         "startup_args": ["--use-coordinator"]
       }
+    ],
+    "profiling_sets": [
+      {
+        "enabled": false
+      },
+      {
+        "enabled": true,
+        "mode": "wall-time",
+        "sampling_freq": 999,
+        "delays": {
+          "write": {
+            "delay": 0,
+            "duration": 10
+          },
+          "read": {
+            "delay": 5,
+            "duration": 10
+          }
+        }
+      }
     ]
   }
 ]
